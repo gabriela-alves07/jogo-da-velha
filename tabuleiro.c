@@ -19,7 +19,6 @@ void desenha(void){
             if (j > 0){
                 printf("|");
             }
-
             if (M[i][j] == 0){
                 printf(" ");
             }
@@ -36,4 +35,12 @@ void desenha(void){
             printf("-----\n");
         }
     }
+}
+
+void marcaJogada(int x, int y, int tipo){
+
+    M[x][y] = tipo;
+}
+int temVencedor(void){
+    
 }
