@@ -2,13 +2,7 @@
 #include <stdio.h>
 #include "tabuleiro.h"
 
-static int M[3][3]={
-    {0, 0, 0},
-    {0, 0, 0},
-    {0, 0, 0}
-};
-
-void desenha(void){
+void desenha(int M[3][3]){
 
     printf("\033[2J\033[H");
 
@@ -37,11 +31,10 @@ void desenha(void){
     }
 }
 
-void marcaJogada(int x, int y, int tipo){
-
+void marcaJogada(int M[3][3], int x, int y, int tipo){
     M[x][y] = tipo;
 }
-int temVencedor(void){
+int temVencedor(int M[3][3]){
 
     for (int i = 0; i < 3; i++){
         int somaL = 0, somaC = 0;
@@ -50,10 +43,10 @@ int temVencedor(void){
             somaL += M[i][j];
             somaC += M[j][i];
         }
-        if (somaL == 12){
+        if (somaL == 12 || somaC == 12){
             return JOGADOR_X;
         }
-        else if (somaC == 3){
+        else if (somaL == 3 || somaC == 3){
             return JOGADOR_O ;   
         }
     }
@@ -66,4 +59,12 @@ int temVencedor(void){
     if (somaD1 == 3 || somaD2 == 3){
         return JOGADOR_O;
     }
+    for (int i = 0; i < 3; i++){
+        for (int j = 0; j < 3; j++){
+            if (M[i][j] == 0){
+                return EM_JOGO;
+            }
+        }
+    }
+    return EMPATE;
 }
