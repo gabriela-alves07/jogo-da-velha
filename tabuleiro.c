@@ -48,14 +48,22 @@ int temVencedor(void){
 
         for (int j = 0; j < 3; j++){
             somaL += M[i][j];
+            somaC += M[j][i];
         }
         if (somaL == 12){
             return JOGADOR_X;
         }
-        else if (somaL == 3){
+        else if (somaC == 3){
             return JOGADOR_O ;   
         }
     }
     int somaD1 = M[0][0] + M[1][1] + M[2][2];
     int somaD2 = M[0][2] + M[1][1] + M[2][0];
+
+    if (somaD1 == 12 || somaD2 == 12){
+        return JOGADOR_X;
+    }
+    if (somaD1 == 3 || somaD2 == 3){
+        return JOGADOR_O;
+    }
 }
