@@ -4,6 +4,6 @@
 #include "jogadorTeclado.h"
 
 struct jogadorTeclado configuraJogadores(int tipo);
-void inicia();
+void inicia(int M[3][3], struct jogadorTeclado j1, struct jogadorTeclado j2);
 
 #endif 
