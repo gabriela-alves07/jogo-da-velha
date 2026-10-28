@@ -2,8 +2,18 @@
 #define PARTIDA_H
 
 #include "jogadorTeclado.h"
+#include "jogadorIA.h"
 
-struct jogadorTeclado configuraJogadores(int tipo);
-void inicia(int M[3][3], struct jogadorTeclado j1, struct jogadorTeclado j2);
+enum modoJogador { HUMANO, COMPUTADOR };
 
-#endif 
+
+struct jogador {
+    int modo;                     
+    struct jogadorTeclado teclado; 
+    struct jogadorIA ia;           
+};
+
+struct jogador configuraJogadores(int modo, int tipo);
+void inicia(int M[3][3], struct jogador j1, struct jogador j2);
+
+#endif

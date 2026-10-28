@@ -1,16 +1,28 @@
 #include <stdio.h>
 #include "tabuleiro.h"
 #include "jogadorTeclado.h"
+#include "jogadorIA.h"
 #include "partida.h"
 
-struct jogadorTeclado configuraJogadores(int tipo){
-    struct jogadorTeclado jogador;
+struct jogador configuraJogadores(int modo, int tipo){
+    struct jogador jogador;
 
-    jogador.tipo = tipo;
+    jogador.modo = modo;
+    jogador.teclado.tipo = tipo;
+    jogador.ia.tipo = tipo;
     return jogador;
 }
 
-void inicia(int M[3][3], struct jogadorTeclado j1, struct jogadorTeclado j2){
+static void jogaJogador(int M[3][3], struct jogador jogador){
+    if (jogador.modo == COMPUTADOR){
+        jogaIA(M, jogador.ia);
+    }
+    else{
+        joga(M, jogador.teclado);
+    }
+}
+
+void inicia(int M[3][3], struct jogador j1, struct jogador j2){
     int resultado = EM_JOGO;
     int vez = 1;
 
@@ -18,10 +30,10 @@ void inicia(int M[3][3], struct jogadorTeclado j1, struct jogadorTeclado j2){
 
     while (resultado == EM_JOGO){
         if (vez == 1){
-            joga(M, j1);
+            jogaJogador(M, j1);
         }
         else{
-            joga(M, j2);
+            jogaJogador(M, j2);
         }
 
         desenha(M);
