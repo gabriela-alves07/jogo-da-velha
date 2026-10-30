@@ -5,6 +5,7 @@
 void desenha(int M[3][3]){
 
     printf("\033[2J\033[H");
+    printf("\n");
 
     for (int i = 0; i < 3; i++){
 
