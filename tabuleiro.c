@@ -9,7 +9,7 @@ void desenha(int M[3][3]){
 
     printf("  1 2 3\n");
     for (int i = 0; i < 3; i++){
-
+        printf("%d ", i + 1);
 
         for (int j = 0; j < 3; j++){
 
