@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include "tabuleiro.h"
 #include "partida.h"
-
+//*oiiiii
 int main(){
     int M[3][3] = {{0, 0, 0}, {0, 0, 0}, {0, 0, 0}};
     int opcao, lido, c;
