@@ -3,9 +3,6 @@
 #include "jogadorRemoto.h"
 
 #ifdef _WIN32
-    #ifndef _WIN32_WINNT
-        #define _WIN32_WINNT 0x0600
-    #endif
     #include <winsock2.h>
     #include <ws2tcpip.h>
     #define FECHA(s) closesocket(s)
@@ -21,11 +18,12 @@
 static void iniciaSockets(void){
 #ifdef _WIN32
     WSADATA dados;
-    WSAStartup(MAKEWORD(2, 2), &dados); 
+    WSAStartup(MAKEWORD(2, 2), &dados);  
 #else
-    signal(SIGPIPE, SIG_IGN);  
+    signal(SIGPIPE, SIG_IGN); 
 #endif
 }
+
 int conecta(struct jogadorRemoto *jogador, const char *ip, int porta){
     int sock;
     struct sockaddr_in servidor;
@@ -41,7 +39,8 @@ int conecta(struct jogadorRemoto *jogador, const char *ip, int porta){
     servidor.sin_family = AF_INET;
     servidor.sin_port = htons(porta);
 
-    if (inet_pton(AF_INET, ip, &servidor.sin_addr) <= 0){
+    servidor.sin_addr.s_addr = inet_addr(ip);  
+    if (servidor.sin_addr.s_addr == INADDR_NONE){
         printf("Endereco IP invalido: %s\n", ip);
         FECHA(sock);
         return 0;
@@ -56,6 +55,7 @@ int conecta(struct jogadorRemoto *jogador, const char *ip, int porta){
     jogador->socketConexao = sock;
     return 1;
 }
+
 int aceita(struct jogadorRemoto *jogador, int porta){
     int servidor, cliente;
     struct sockaddr_in endereco;
@@ -97,11 +97,13 @@ int aceita(struct jogadorRemoto *jogador, int porta){
     jogador->socketConexao = cliente;
     return 1;
 }
+
 int enviaJogada(struct jogadorRemoto *jogador, int linha, int coluna){
     char jogada = linha * 3 + coluna;
 
     return send(jogador->socketConexao, &jogada, 1, 0) == 1;
 }
+
 int jogaRemoto(int M[3][3], struct jogadorRemoto jogador){
     char jogada;
 
