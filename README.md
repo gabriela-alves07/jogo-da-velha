@@ -7,7 +7,7 @@ Jogo da Velha no terminal, escrito em **C** para a disciplina de **Programação
 > ✅ Atividade 2 — Módulo IA
 > ✅ Atividade 3 — Módulo Jogador Remoto
 
-**Autores:** Nome do Aluno 1 · Nome do Aluno 2
+**Autores:** Gabriela Francisca Alves da Silva e Heloísa Stella Azevedo Reis
 
 ---
 
