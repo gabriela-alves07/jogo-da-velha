@@ -1,13 +1,13 @@
 # 🎮 Jogo da Velha em C
 
-Jogo da Velha no terminal, escrito em **C** para a disciplina de **Programação Estruturada**. O jogador humano pode enfrentar outro humano ou um **computador com IA baseada em regras**.
+Jogo da Velha no terminal, escrito em **C** para a disciplina de **Programação Estruturada**. O jogador humano pode enfrentar outro humano, um **computador com IA baseada em regras** ou um **adversário remoto** em outro programa (mesma máquina ou outro computador, via sockets TCP).
 
 > **Status do projeto**
 > ✅ Atividade 1 — Módulo Jogo de Tabuleiro
 > ✅ Atividade 2 — Módulo IA
-> ⏳ Atividade 3 — Módulo Jogador Remoto (em breve)
+> ✅ Atividade 3 — Módulo Jogador Remoto
 
-**Autores:** Gabriela Francisca Alves da Silva · Heloísa Stella Azevedo Reis
+**Autores:** Nome do Aluno 1 · Nome do Aluno 2
 
 ---
 
@@ -19,7 +19,7 @@ Jogo da Velha no terminal, escrito em **C** para a disciplina de **Programação
 - [Arquitetura](#-arquitetura)
 - [Atividade 1 — Tabuleiro e jogador humano](#-atividade-1--tabuleiro-e-jogador-humano)
 - [Atividade 2 — IA](#-atividade-2--ia)
-- [Próximos passos](#-próximos-passos)
+- [Atividade 3 — Jogador Remoto](#-atividade-3--jogador-remoto)
 
 ---
 
@@ -55,12 +55,25 @@ O programa valida a entrada e avisa quando você digita algo que não é número
 
 ## ⚙️ Compilação e execução
 
-**Requisitos:** GCC e um terminal com suporte a sequências ANSI (Linux, macOS, WSL ou Windows Terminal). A tela é limpa com `printf("\033[2J\033[H");`.
+**Requisitos:** GCC (MinGW no Windows) e um terminal com suporte a sequências ANSI para limpar a tela (Windows Terminal, Linux, macOS ou WSL).
+
+**Humano × Humano e Humano × Computador (Atividades 1 e 2):**
 
 ```bash
-gcc -Wall -o jogo_velha main.c tabuleiro.c jogadorTeclado.c jogadorIA.c regra.c partida.c
+# Linux, macOS ou WSL
+gcc -Wall -o jogo_velha main.c tabuleiro.c jogadorTeclado.c jogadorIA.c regras.c partida.c jogadorRemoto.c
 ./jogo_velha
 ```
+
+```powershell
+# Windows (PowerShell): acrescente -lws2_32 ao final
+gcc -Wall -o jogo_velha main.c tabuleiro.c jogadorTeclado.c jogadorIA.c regras.c partida.c jogadorRemoto.c -lws2_32
+.\jogo_velha.exe
+```
+
+> O `jogadorRemoto.c` entra em todos os comandos porque o `partida.c` o utiliza. No Windows, `-lws2_32` liga a biblioteca de sockets (Winsock).
+
+**Jogo em rede (Atividade 3):** veja [Como compilar e jogar em rede](#como-compilar-e-jogar-em-rede).
 
 ---
 
@@ -68,12 +81,15 @@ gcc -Wall -o jogo_velha main.c tabuleiro.c jogadorTeclado.c jogadorIA.c regra.c 
 
 ```
 .
-├── main.c               # Menu e inicialização da partida
+├── main.c               # Menu local (Atividades 1 e 2)
+├── main_servidor.c      # Jogador servidor, X (Atividade 3)
+├── main_cliente.c       # Jogador cliente, O (Atividade 3)
 ├── partida.h / .c       # Controle do loop do jogo
 ├── tabuleiro.h / .c     # Matriz, desenho e detecção de vencedor
-├── jogadorTeclado.h / .c# Jogador humano (entrada pelo teclado)
+├── jogadorTeclado.h / .c #  Jogador humano (entrada pelo teclado)
 ├── jogadorIA.h / .c     # Jogador computador
-├── regra.h / .c         # Regras usadas pela IA
+├── regras.h / .c         # Regras usadas pela IA
+├── jogadorRemoto.h / .c  # Jogador remoto (sockets TCP)
 └── README.md
 ```
 
@@ -89,9 +105,11 @@ flowchart TD
     Partida[Partida<br/>configuraJogadores / inicia] --> Tabuleiro
     Partida --> JogadorTeclado[JogadorTeclado<br/>joga]
     Partida --> JogadorIA[JogadorIA<br/>jogaIA]
+    Partida --> JogadorRemoto[JogadorRemoto<br/>jogaRemoto / enviaJogada]
     JogadorIA --> Regra[Regra<br/>regra]
     JogadorTeclado -.->|marcaJogada| Tabuleiro
     JogadorIA -.->|marcaJogada| Tabuleiro
+    JogadorRemoto -.->|marcaJogada| Tabuleiro
     Tabuleiro[Tabuleiro<br/>desenha / temVencedor / marcaJogada]
 ```
 
@@ -101,9 +119,10 @@ flowchart TD
 | `Tabuleiro` | `tabuleiro.c` | Funções que recebem a matriz `M[3][3]` como parâmetro |
 | `JogadorTeclado` | `jogadorTeclado.c` | `struct jogadorTeclado` + `joga()` |
 | `JogadorIA` | `jogadorIA.c` | `struct jogadorIA` + `jogaIA()` |
-| `Regra` | `regra.c` | Função `regra()` que avalia uma regra por número |
+| `Regra` | `regras.c` | Função `regra()` que avalia uma regra por número |
+| `JogadorRemoto` | `jogadorRemoto.c` | `struct jogadorRemoto` + `conecta()`, `aceita()`, `enviaJogada()`, `jogaRemoto()` |
 
-Para a `Partida` aceitar qualquer combinação de jogadores, ela usa uma `struct jogador` com um campo `modo` (`HUMANO` ou `COMPUTADOR`). A função interna `jogaJogador()` chama `joga()` ou `jogaIA()` conforme o modo. Os nomes diferentes (`joga` e `jogaIA`) evitam conflito de símbolos, já que C não tem sobrecarga de funções.
+Para a `Partida` aceitar qualquer combinação de jogadores, ela usa uma `struct jogador` com um campo `modo` (`HUMANO`, `COMPUTADOR` ou `REMOTO`). A função interna `jogaJogador()` chama `joga()`, `jogaIA()` ou `jogaRemoto()` conforme o modo. Os nomes diferentes (`joga` e `jogaIA`) evitam conflito de símbolos, já que C não tem sobrecarga de funções.
 
 ---
 
@@ -171,9 +190,78 @@ A R1 do enunciado aparece em dois casos (1 e 2): primeiro a IA tenta ganhar e s�
 
 ---
 
-## 🔜 Próximos passos
+## 🌐 Atividade 3 — Jogador Remoto
 
-**Atividade 3 — Jogador Remoto:** comunicação cliente-servidor por sockets TCP. Serão dois programas: o **servidor** (espera a conexão e joga primeiro, como X) e o **cliente** (pede a conexão e joga como O), alternando as jogadas até haver vitória ou empate.
+O adversário roda em **outro processo**, na mesma máquina ou em outro computador, ligado por uma conexão **TCP** (modelo cliente-servidor).
+
+### Como funciona
+
+| | Servidor (`main_servidor.c`) | Cliente (`main_cliente.c`) |
+|---|---|---|
+| Papel na rede | Espera a conexão (`aceita`) | Pede a conexão (`conecta`) |
+| Símbolo | **X** (`4`), joga primeiro | **O** (`1`), joga em segundo |
+| Jogador local | Teclado ou computador (menu) | Teclado ou computador (menu) |
+
+Cada programa tem o seu próprio tabuleiro. Eles ficam iguais porque trocam **apenas a jogada** a cada turno. A jogada viaja como **1 byte**: o número da casa, de 0 a 8 (`linha * 3 + coluna`).
+
+```
+Turno do jogador local:    joga (teclado ou IA) → grava no tabuleiro → ENVIA a jogada
+Turno do jogador remoto:   fica bloqueado esperando → RECEBE a jogada → grava no tabuleiro
+```
+
+### Funções do `JogadorRemoto`
+
+| Função | O que faz |
+|---|---|
+| `conecta(jogador, ip, porta)` | **Cliente:** `socket()` + `connect()` |
+| `aceita(jogador, porta)` | **Servidor:** `socket()` + `bind()` + `listen()` + `accept()`. Chama-se `aceita` para não colidir com o `accept()` da biblioteca de sockets |
+| `enviaJogada(jogador, linha, coluna)` | Envia a jogada ao adversário (`write`) |
+| `jogaRemoto(M, jogador)` | Fica bloqueada em `read` até chegar a jogada, valida e grava no tabuleiro |
+| `fechaRemoto(jogador)` | Fecha os sockets |
+
+### Mudanças nos módulos existentes
+
+- `partida.h`: novo modo `REMOTO` e o campo `remoto` na `struct jogador`.
+- `partida.c`: `jogaJogador()` ganhou o caso remoto. Depois de cada jogada local, o `inicia()` compara o tabuleiro antes e depois, descobre a casa marcada e a envia ao adversário. Assim `joga()` e `jogaIA()` continuam intactos.
+- `tabuleiro`, `jogadorTeclado`, `jogadorIA` e `regras`: **sem alteração**.
+
+### Cuidados do código
+
+- **Validação:** a jogada recebida da rede só é gravada se for um número de 0 a 8 e a casa estiver livre.
+- **Desconexão:** se o adversário fechar o programa, o jogo avisa e encerra, sem travar.
+- **Windows e Linux:** o mesmo código funciona nos dois. Usa `#ifdef _WIN32` apenas para os `#include` de sockets e para iniciar o Winsock (`WSAStartup`); no Linux, `signal(SIGPIPE, SIG_IGN)` evita que o programa seja encerrado se o outro lado já tiver fechado a conexão.
+
+### Como compilar e jogar em rede
+
+**Windows (PowerShell):**
+
+```powershell
+gcc -Wall -o servidor main_servidor.c tabuleiro.c jogadorTeclado.c jogadorIA.c regras.c partida.c jogadorRemoto.c -lws2_32
+gcc -Wall -o cliente  main_cliente.c  tabuleiro.c jogadorTeclado.c jogadorIA.c regras.c partida.c jogadorRemoto.c -lws2_32
+```
+
+**Linux, macOS ou WSL:**
+
+```bash
+gcc -Wall -o servidor main_servidor.c tabuleiro.c jogadorTeclado.c jogadorIA.c regras.c partida.c jogadorRemoto.c
+gcc -Wall -o cliente  main_cliente.c  tabuleiro.c jogadorTeclado.c jogadorIA.c regras.c partida.c jogadorRemoto.c
+```
+
+**Executar** (em dois terminais; abra primeiro o servidor):
+
+```bash
+# Terminal 1 (servidor, porta padrão 8080)
+./servidor
+./servidor 9000            # porta opcional
+
+# Terminal 2 (cliente, IP e porta padrão: 127.0.0.1 e 8080)
+./cliente
+./cliente 127.0.0.1 9000   # IP e porta opcionais
+```
+
+No Windows, use `.\servidor.exe` e `.\cliente.exe` (mesmos argumentos).
+
+Para jogar entre **dois computadores**, rode o servidor em um deles e, no outro, passe o IP do computador do servidor (por exemplo `.\cliente.exe 192.168.0.10 8080`). Descubra o IP do servidor com `ipconfig` (Endereço IPv4). Os dois precisam estar na mesma rede, e o firewall do Windows do servidor deve permitir a conexão (clique em **Permitir acesso** quando o aviso aparecer na primeira execução).
 
 ## 📅 Cronograma
 
